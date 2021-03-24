@@ -1,0 +1,89 @@
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenLocal()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+
+        classpath 'com.novoda:bintray-release:0.9.1'
+    }
+}
+
+repositories {
+    google()
+    jcenter()
+    mavenLocal()
+}
+
+apply plugin: 'com.android.library'
+
+ext {
+    group = 'com.alibaba.android'
+    artifactName = 'mnn'
+    version = '0.0.4'
+}
+
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 28
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionCode 1
+        versionName version
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_ARM_NEON=TRUE", "-DANDROID_PLATFORM=android-21", "-DMNN_OPENCL=true", "-DANDROID_STL=c++_shared"
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
+            }
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "../../CMakeLists.txt"
+        }
+    }
+}
+
+apply from: "nativepub.gradle"
+apply plugin: 'com.novoda.bintray-release'
+
+publishing {
+    publications {
+        nativepacked(MavenPublication) {
+            groupId = project.publish.groupId
+            artifactId project.publish.artifactId
+            version = project.publish.publishVersion
+
+            artifact "${project.buildDir}/outputs/aar/${project.name}-release.aar"
+            pom.packaging "aar"
+        }
+    }
+
+}
+
+publish {
+    groupId = project.ext.group
+    artifactId = project.ext.artifactName
+    publishVersion = project.ext.version
+
+    bintrayUser = 'MNN'
+    userOrg = 'mnnteam'
+    repoName = 'maven'
+    dryRun = false
+
+    desc = 'MNN Library'
+    website = 'https://github.com/alibaba/MNN'
+    publications = ["nativepacked"]
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.1'
+    distributionUrl = 'http://mirrors.taobao.net/mirror/gradle/gradle-4.1-bin.zip'
+}
